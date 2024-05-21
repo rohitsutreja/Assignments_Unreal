@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseCharacter.h"
-#include "GameFramework/Character.h"
+#include "../../../../../Plugins/Assignments_1_2/Source/Assignments_1_2/Public/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "TP_ThirdPersonCharacter.generated.h"
 

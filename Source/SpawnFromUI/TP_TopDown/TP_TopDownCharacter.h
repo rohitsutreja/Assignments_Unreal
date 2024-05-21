@@ -3,9 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseCharacter.h"
+#include "../../../../../Plugins/Assignments_1_2/Source/Assignments_1_2/Public/BaseCharacter.h"
 #include "NiagaraSystem.h"
-#include "GameFramework/Character.h"
 #include "TP_TopDownCharacter.generated.h"
 
 UCLASS(Blueprintable)

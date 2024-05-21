@@ -8,24 +8,26 @@ public class SpawnFromUI : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "CoreUObject",
-                "Engine",
-                "Slate",
-                "SlateCore",
-                "InputCore" ,
-                "HeadMountedDisplay",
-                "NavigationSystem",
-                "AIModule",
-                "Niagara",
-                "EnhancedInput",
-                "Assignments_1_2"});
+		PublicDependencyModuleNames.AddRange(new string[] { 
+            "Core", 
+            "CoreUObject",        
+            "InputCore",           
+            "Engine",
+            "Slate",
+            "SlateCore",          
+             "HeadMountedDisplay",
+             "NavigationSystem",
+             "AIModule",
+             "Niagara",
+              "EnhancedInput",
+              "Assignments_1_2"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
 
 
         PublicIncludePaths.AddRange(new string[] {
-             "D:/Unreal Projects/Assignments/Assignments_4/SpawnFromUI/Plugins/Assignments_1_2/Source/Assignments_1_2/Public" });
+             });
 
   
 

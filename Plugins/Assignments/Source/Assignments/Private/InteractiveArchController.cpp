@@ -301,7 +301,7 @@ void AInteractiveArchController::SpawnActorWithMesh(UStaticMesh* Mesh)
 
 			SpawnedActor->SetMobility(EComponentMobility::Movable);
 			SpawnedActor->GetStaticMeshComponent()->SetStaticMesh(Mesh);
-			SpawnedActor->SetActorRelativeScale3D({ 2,2,2 });
+			SpawnedActor->SetActorRelativeScale3D({ 1.5,1.5,1.5 });
 
 			CurrentlySelectedActor = SpawnedActor;
 			ArchMeshActorsArray.Add(CurrentlySelectedActor);
