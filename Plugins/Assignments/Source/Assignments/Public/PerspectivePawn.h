@@ -23,16 +23,6 @@ public:
 
 protected:
 	UPROPERTY()
-	UInputAction* MoveAction;
-
-
-	UPROPERTY()
-	UInputAction* MoveInZAction;
-
-	UPROPERTY()
-	UInputAction* LookAction;
-
-	UPROPERTY()
 	UInputMappingContext* MappingContext;
 
 
@@ -51,8 +41,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UCameraComponent* Camera;
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USceneComponent* SceneRoot;
+	UCapsuleComponent* Capsule;
 
 	UPROPERTY()
 	UFloatingPawnMovement* MovementComponent;

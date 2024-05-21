@@ -35,4 +35,7 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMesh* SplineSegmentMesh;
 
+	UPROPERTY()
+	UMaterial* Material;
+
 };

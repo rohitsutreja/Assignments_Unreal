@@ -7,6 +7,10 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "math.h"
 
+
+
+//This pawn was used for Assignment 3, top down to perspective view, we are not using this right now becuase we have 3 views availbale - perspective, orthographic and isometric.
+
 ATopDownPawn::ATopDownPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;

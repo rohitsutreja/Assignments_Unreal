@@ -36,16 +36,6 @@ public:
 	void HandleRotateClockWise();
 	void HandleRotateAntiClockWise();
 
-
-	UPROPERTY()
-	UInputAction* RotationClocWiseAction;
-
-	UPROPERTY()
-	UInputAction* RotationAntiClockWiseAction;
-
-	UPROPERTY()
-	UInputAction* ZoomAction;
-
 	UPROPERTY()
 	UInputMappingContext* MappingContext;
 
@@ -58,6 +48,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USceneComponent* SceneRoot;
 
+
+	float TargetAngle{45};
 
 
 };

@@ -33,16 +33,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
-	UPROPERTY()
-	UInputAction* MoveAction;
-
-	UPROPERTY()
-	UInputAction* LookAction;
-
-	UPROPERTY()
-	UInputAction* ZoomAction;
-
 	UPROPERTY()
 	UInputMappingContext* MappingContext;
 

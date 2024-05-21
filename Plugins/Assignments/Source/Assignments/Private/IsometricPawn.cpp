@@ -23,13 +23,14 @@ AIsometricPawn::AIsometricPawn()
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->TargetArmLength = 800;
+	CameraBoom->TargetArmLength = 1500;
 	CameraBoom->SetRelativeRotation(FRotator(-40.f, 45.f, 0.f));
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 5.f;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 
-	
 	Camera->ProjectionMode = ECameraProjectionMode::Type::Orthographic;
 	Camera->OrthoWidth = 2048.0f;
 }
@@ -46,6 +47,10 @@ void AIsometricPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	FRotator CurrentRotation = CameraBoom->GetRelativeRotation();
+	FRotator TargetRotation = FRotator(CurrentRotation.Pitch, TargetAngle, CurrentRotation.Roll);
+	CameraBoom->SetRelativeRotation(FMath::Lerp(CurrentRotation, TargetRotation, DeltaTime));
+
 }
 
 // Called to bind functionality to input
@@ -53,13 +58,13 @@ void AIsometricPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	RotationClocWiseAction = NewObject<UInputAction>(this);
+	auto RotationClocWiseAction = NewObject<UInputAction>(this);
 	RotationClocWiseAction->ValueType = EInputActionValueType::Boolean;
 
-	RotationAntiClockWiseAction = NewObject<UInputAction>(this);
+	auto RotationAntiClockWiseAction = NewObject<UInputAction>(this);
 	RotationAntiClockWiseAction->ValueType = EInputActionValueType::Boolean;
 
-	ZoomAction = NewObject<UInputAction>(this);
+	auto ZoomAction = NewObject<UInputAction>(this);
 	ZoomAction->ValueType = EInputActionValueType::Axis1D;
 
 	MappingContext = NewObject<UInputMappingContext>(this);
@@ -101,22 +106,19 @@ void AIsometricPawn::HandleZoom(const FInputActionValue& Value)
 	//CameraBoom->TargetArmLength = CameraBoom->TargetArmLength - Movement * 25;
 
 	Camera->OrthoWidth = Camera->OrthoWidth - Movement * 25;
+
+	Camera->OrthoWidth = FMath::Clamp(Camera->OrthoWidth, 1400, 5000);
+	
 }
 
 void AIsometricPawn::HandleRotateClockWise()
 {
-	auto OldRotation = CameraBoom->GetRelativeRotation();
-	OldRotation.Yaw += 45;
-
-	CameraBoom->SetRelativeRotation(OldRotation);
+	TargetAngle += 45;
 }
 
 void AIsometricPawn::HandleRotateAntiClockWise()
 {
-	auto OldRotation = CameraBoom->GetRelativeRotation();
-	OldRotation.Yaw -= 45;
-
-	CameraBoom->SetRelativeRotation(OldRotation);
+	TargetAngle -= 45;
 }
 
 

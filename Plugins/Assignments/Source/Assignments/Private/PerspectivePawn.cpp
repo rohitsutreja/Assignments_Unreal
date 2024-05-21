@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InteractiveArchController.h"
+#include "Components/CapsuleComponent.h"
 #include "Evaluation/PreAnimatedState/MovieScenePreAnimatedCaptureSources.h"
 
 
@@ -15,8 +16,16 @@ APerspectivePawn::APerspectivePawn()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    SceneRoot = CreateDefaultSubobject<USceneComponent>("SceneRoot");
-    RootComponent = SceneRoot;
+    Capsule = CreateDefaultSubobject<UCapsuleComponent>("Capsule");
+	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Capsule->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+	Capsule->SetCollisionResponseToAllChannels(ECR_Block);
+
+	
+	Capsule->SetCapsuleHalfHeight(1); 
+	Capsule->SetCapsuleRadius(1);
+
+	RootComponent = Capsule;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
@@ -43,9 +52,9 @@ void APerspectivePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	MappingContext = NewObject<UInputMappingContext>(this);
 
-	MoveAction = NewObject<UInputAction>(this);
-	MoveAction->ValueType = EInputActionValueType::Axis3D;
-	LookAction = NewObject<UInputAction>(this);
+	auto MoveAction = NewObject<UInputAction>(this);
+	 MoveAction->ValueType = EInputActionValueType::Axis3D;
+	 auto LookAction = NewObject<UInputAction>(this);
 	LookAction->ValueType = EInputActionValueType::Axis2D;
 
 	UInputModifierNegate* MoveActionModifierNegate = NewObject<UInputModifierNegate>();
@@ -104,12 +113,11 @@ void APerspectivePawn::BeginPlay()
 
 void APerspectivePawn::HandleMove(const FInputActionValue& Value)
 {
-    auto Movement = Value.Get<FVector>();
+	auto Movement = Value.Get<FVector>();
 	AddMovementInput(GetActorForwardVector(), Movement.X);
 	AddMovementInput(GetActorRightVector(), Movement.Y);
 	AddMovementInput(FVector::ZAxisVector, Movement.Z);
 
-	AddMovementInput(GetControlRotation().RotateVector(Movement), 1);
 }
 
 void APerspectivePawn::HandleLook(const FInputActionValue& Value)

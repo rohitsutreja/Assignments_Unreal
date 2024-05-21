@@ -10,10 +10,18 @@ AWallSpline::AWallSpline()
 	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
 	RootComponent = Spline;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> WallSegmentMesh(TEXT("/Assignments/Assignment_4/Wall_Segment.Wall_Segment"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> WallSegmentMesh(TEXT("/Script/Engine.StaticMesh'/Game/StarterContent/Architecture/Wall_400x200.Wall_400x200'"));
 
 	if (WallSegmentMesh.Succeeded()) {
 		SplineSegmentMesh = WallSegmentMesh.Object;
+		
+	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> WallSegmentMaterial(TEXT("/Script/Engine.Material'/Game/StarterContent/Materials/M_Brick_Clay_Old.M_Brick_Clay_Old'"));
+
+	if (WallSegmentMaterial.Succeeded()) {
+		Material = WallSegmentMaterial.Object;
+
 	}
 }
 
@@ -47,9 +55,8 @@ bool AWallSpline::HasAnySegment() {
 	if (PointsArray.Num() >= 2) {
 		return true;
 	}
-	else {
+
 		return false;
-	}
 }
 
 
@@ -75,6 +82,7 @@ void AWallSpline::GenerateSpline()
 		SplineMeshComponent->RegisterComponent();
 		SplineMeshComponent->SetMobility(EComponentMobility::Movable);
 		SplineMeshComponent->SetStaticMesh(SplineSegmentMesh);
+		SplineMeshComponent->SetMaterial(0 , Material);
 		SplineMeshComponent->SetStartAndEnd(StartLocation, StartTangent, EndLocation, EndTangent);
 		SplineMeshComponent->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
 

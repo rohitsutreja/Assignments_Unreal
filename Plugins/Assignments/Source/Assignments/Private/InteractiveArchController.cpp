@@ -8,7 +8,6 @@
 #include "ArchMeshActor.h"
 #include "Engine/StaticMeshActor.h"
 #include <WallSpline.h>
-
 #include "IsometricPawn.h"
 #include "OrthographicPawn.h"
 #include "PerspectivePawn.h"
@@ -161,12 +160,15 @@ void AInteractiveArchController::HandleBackSpace(const FInputActionValue& value)
 	CurrentSplineActor->GenerateSpline();
 }
 
+
 void AInteractiveArchController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
 	SetUpInputForScrollBar();
 }
+
+//Attach input mapping for Wall spline mode
 void AInteractiveArchController::SetUpInputForWallSpline()
 {
 	auto LeftClickActionForWall = NewObject<UInputAction>(this);
@@ -209,6 +211,8 @@ void AInteractiveArchController::SetUpInputForWallSpline()
 		InputSubsystem->AddMappingContext(MappingContextForWall, 0);
 	}
 }
+
+//Attach input mappings for shape spawns mode
 void AInteractiveArchController::SetUpInputForScrollBar()
 {
 	const auto IA_LeftClick = NewObject<UInputAction>(this);
@@ -233,6 +237,7 @@ void AInteractiveArchController::SetUpInputForScrollBar()
 	}
 }
 
+//HAndle left click input for shape spawn mode
 void AInteractiveArchController::HandleLeftClick()
 {
 	if (FVector StartLocation, WorldDirection; DeprojectMousePositionToWorld(StartLocation, WorldDirection))
@@ -244,6 +249,8 @@ void AInteractiveArchController::HandleLeftClick()
 
 		if (FHitResult HitResult; GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params))
 		{
+
+			//check if we are hitting already spawned mesh or floor
 			if (auto HitActor = Cast<AArchMeshActor>(HitResult.GetActor()))
 			{
 				CurrentlySelectedActor = HitActor;
@@ -253,9 +260,10 @@ void AInteractiveArchController::HandleLeftClick()
 				
 				if(ViewType == EViewType::Isometric)
 				{
-					GetPawn()->SetActorLocation(CurrentlySelectedActor->GetActorLocation() + FVector(0, 0, 500));
+					GetPawn()->SetActorLocation(CurrentlySelectedActor->GetActorLocation() + FVector(0, 0, 300));
 				}
 
+				HitLocation = CurrentlySelectedActor->GetActorLocation();
 			}
 			else
 			{
@@ -269,11 +277,14 @@ void AInteractiveArchController::HandleLeftClick()
 
 	}
 }
+
+//hide selection widget on tab press
 void AInteractiveArchController::HandleTab()
 {
 	SelectionWidget->SetVisibility(ESlateVisibility::Collapsed);
 }
 
+//SPawns actor with given mesh at last hit location of floor, only called when we hit empty floor before clicking on mesh in scrollbar
 void AInteractiveArchController::SpawnActorWithMesh(UStaticMesh* Mesh)
 {
 
@@ -305,6 +316,8 @@ void AInteractiveArchController::SpawnActorWithMesh(UStaticMesh* Mesh)
 
 }
 
+
+//Based on last hit, we either change the mesh of the selected actor or spawn new actor if empty floor is hit.
 void AInteractiveArchController::HandleMeshThumbnailSelected(const FMeshData& MeshData)
 {
 	if (MeshData.Mesh)
@@ -313,13 +326,13 @@ void AInteractiveArchController::HandleMeshThumbnailSelected(const FMeshData& Me
 		{
 			if (CurrentlySelectedActor)
 			{
-				
 				CurrentlySelectedActor->ChangeMesh(MeshData.Mesh);
 
+				//We adjust the z axis so that actor stays on top of the ground
 				auto MinBoundOfNewMesh = MeshData.Mesh->GetBoundingBox().Min;
-				
 				FVector OldLoc = CurrentlySelectedActor->GetActorLocation();
 				OldLoc.Z =  -MinBoundOfNewMesh.Z;
+
 				CurrentlySelectedActor->SetActorLocation(OldLoc);
 			}
 
@@ -331,6 +344,7 @@ void AInteractiveArchController::HandleMeshThumbnailSelected(const FMeshData& Me
 	}
 
 }
+
 void AInteractiveArchController::HandleMaterialThumbnailSelected(const FMaterialData& MaterialData)
 {
 	if (CurrentlySelectedActor)
@@ -343,6 +357,7 @@ void AInteractiveArchController::HandleMaterialThumbnailSelected(const FMaterial
 	}
 
 }
+
 void AInteractiveArchController::HandleTextureThumbnailSelected(const FTextureData& TextureData)
 {
 	if (CurrentlySelectedActor)
@@ -356,7 +371,7 @@ void AInteractiveArchController::HandleTextureThumbnailSelected(const FTextureDa
 }
 
 
-
+//Switch the modes between wall spline and shape spawn
 void AInteractiveArchController::HandleSwitch()
 {
 	if (CurrentMode == 0)
@@ -390,16 +405,17 @@ void AInteractiveArchController::HandleSwitch()
 	}
 }
 
+//Refresh view based on value of current view type
 void AInteractiveArchController::RefreshView()
 {
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 	switch (ViewType)
 	{
 	case EViewType::Perspective:
 	{
-		FActorSpawnParameters Params;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-		if (auto SpawnedActor = GetWorld()->SpawnActor<APerspectivePawn>(APerspectivePawn::StaticClass(), GetPawn()->GetActorLocation(), FRotator::ZeroRotator, Params)) {
+		if (auto SpawnedActor = GetWorld()->SpawnActor<APerspectivePawn>(APerspectivePawn::StaticClass(), HitLocation + FVector{ 0,0,300 }, FRotator::ZeroRotator, Params)) {
 			auto Old = GetPawn();
 			Possess(SpawnedActor);
 			Old->Destroy();
@@ -408,9 +424,8 @@ void AInteractiveArchController::RefreshView()
 	}
 	case EViewType::Orthographic:
 	{
-		FActorSpawnParameters Params;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		if (auto SpawnedActor = GetWorld()->SpawnActor<AOrthographicPawn>(AOrthographicPawn::StaticClass(), GetPawn()->GetActorLocation(), FRotator::ZeroRotator, Params)) {
+	
+		if (auto SpawnedActor = GetWorld()->SpawnActor<AOrthographicPawn>(AOrthographicPawn::StaticClass(), HitLocation, FRotator::ZeroRotator, Params)) {
 			auto Old = GetPawn();
 			Possess(SpawnedActor);
 			Old->Destroy();
@@ -419,13 +434,7 @@ void AInteractiveArchController::RefreshView()
 	}
 	case EViewType::Isometric:
 	{
-
-			FActorSpawnParameters Params;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Yellow, "Iso");
-
-		if (auto SpawnedActor = GetWorld()->SpawnActor<AIsometricPawn>(AIsometricPawn::StaticClass(), GetPawn()->GetActorLocation(), FRotator::ZeroRotator, Params)) {
+		if (auto SpawnedActor = GetWorld()->SpawnActor<AIsometricPawn>(AIsometricPawn::StaticClass(), HitLocation + FVector{0,0,300}, FRotator::ZeroRotator, Params)) {
 			auto Old = GetPawn();
 			Possess(SpawnedActor);
 			Old->Destroy();
@@ -435,29 +444,27 @@ void AInteractiveArchController::RefreshView()
 	}
 }
 
+//Based on selection cof combo box, change the current view and refresh it.
 void AInteractiveArchController::OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
 	if (SelectedItem == "Perspective")
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Yellow, "Perspectivr");
 		ViewType = EViewType::Perspective;
 	}
 	else if (SelectedItem == "Orthographic")
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Yellow, "Orthi");
-
 		ViewType = EViewType::Orthographic;
 	}
 	else if (SelectedItem == "Isometric")
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Yellow, "Iso");
-
 		ViewType = EViewType::Isometric;
 	}
 
 
 	RefreshView();
 
+
+	//We have to add player controllers input mappings based on current mode, because refresh view will have cleared all mappings.
 	if (CurrentMode == 0)
 	{
 		SetUpInputForScrollBar();
