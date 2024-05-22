@@ -47,7 +47,7 @@ void APerspectivePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 
-	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	auto EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	check(EIC);
 
 	MappingContext = NewObject<UInputMappingContext>(this);
@@ -57,49 +57,52 @@ void APerspectivePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	 auto LookAction = NewObject<UInputAction>(this);
 	LookAction->ValueType = EInputActionValueType::Axis2D;
 
-	UInputModifierNegate* MoveActionModifierNegate = NewObject<UInputModifierNegate>();
+	auto MoveActionModifierNegate = NewObject<UInputModifierNegate>();
 
-	UInputModifierSwizzleAxis* SwizzleAxisModifier = NewObject<UInputModifierSwizzleAxis>();
+	auto SwizzleAxisModifier = NewObject<UInputModifierSwizzleAxis>();
 	SwizzleAxisModifier->Order = EInputAxisSwizzle::YXZ;
-	UInputModifierSwizzleAxis* SwizzleAxisModifierQE = NewObject<UInputModifierSwizzleAxis>();
+
+	auto SwizzleAxisModifierQE = NewObject<UInputModifierSwizzleAxis>();
 	SwizzleAxisModifierQE->Order = EInputAxisSwizzle::ZYX;
 
-	FEnhancedActionKeyMapping& MovementForwardKeyMapping = MappingContext->MapKey(MoveAction, EKeys::W);
+	auto& WKey = MappingContext->MapKey(MoveAction, EKeys::W);
 
-	FEnhancedActionKeyMapping& MovementBackwardKeyMapping = MappingContext->MapKey(MoveAction, EKeys::S);
-	MovementBackwardKeyMapping.Modifiers.Add(MoveActionModifierNegate);
+	auto& SKey = MappingContext->MapKey(MoveAction, EKeys::S);
+	SKey.Modifiers.Add(MoveActionModifierNegate);
 
-	FEnhancedActionKeyMapping& MovementRightKeyMapping = MappingContext->MapKey(MoveAction, EKeys::D);
-	MovementRightKeyMapping.Modifiers.Add(SwizzleAxisModifier);
+	auto& DKey = MappingContext->MapKey(MoveAction, EKeys::D);
+	DKey.Modifiers.Add(SwizzleAxisModifier);
 
-	FEnhancedActionKeyMapping& MovementLeftKeyMapping = MappingContext->MapKey(MoveAction, EKeys::A);
-	MovementLeftKeyMapping.Modifiers.Add(SwizzleAxisModifier);
-	MovementLeftKeyMapping.Modifiers.Add(MoveActionModifierNegate);
+	auto& AKey = MappingContext->MapKey(MoveAction, EKeys::A);
+	AKey.Modifiers.Add(SwizzleAxisModifier);
+	AKey.Modifiers.Add(MoveActionModifierNegate);
 
-	FEnhancedActionKeyMapping& MovementUpKeyMapping = MappingContext->MapKey(MoveAction, EKeys::E);
-	MovementUpKeyMapping.Modifiers.Add(SwizzleAxisModifierQE);
+	auto& EKey = MappingContext->MapKey(MoveAction, EKeys::E);
+	EKey.Modifiers.Add(SwizzleAxisModifierQE);
 
-	FEnhancedActionKeyMapping& MovementDownKeyMapping = MappingContext->MapKey(MoveAction, EKeys::Q);
-	MovementDownKeyMapping.Modifiers.Add(SwizzleAxisModifierQE);
-	MovementDownKeyMapping.Modifiers.Add(MoveActionModifierNegate);
+	auto& QKey = MappingContext->MapKey(MoveAction, EKeys::Q);
+	QKey.Modifiers.Add(SwizzleAxisModifierQE);
+	QKey.Modifiers.Add(MoveActionModifierNegate);
 
-	UInputModifierNegate* LookActionMouseModifierNegate = NewObject<UInputModifierNegate>();
+	auto LookActionMouseModifierNegate = NewObject<UInputModifierNegate>();
 	LookActionMouseModifierNegate->bX = false;
 	LookActionMouseModifierNegate->bY = true;
 	LookActionMouseModifierNegate->bZ = false;
 
-	FEnhancedActionKeyMapping& LookActionMouseMapping = MappingContext->MapKey(LookAction, EKeys::Mouse2D);
+	auto& LookActionMouseMapping = MappingContext->MapKey(LookAction, EKeys::Mouse2D);
 	LookActionMouseMapping.Modifiers.Add(LookActionMouseModifierNegate);
 
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APerspectivePawn::HandleMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APerspectivePawn::HandleLook);
 
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	auto PlayerController = Cast<APlayerController>(GetController());
 	check(PlayerController)
-		ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+
+	auto LocalPlayer = PlayerController->GetLocalPlayer();
 	check(LocalPlayer);
 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	auto Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	Subsystem->ClearAllMappings();
 	Subsystem->AddMappingContext(MappingContext, 0);
 }
 

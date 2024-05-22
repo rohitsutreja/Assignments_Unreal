@@ -57,8 +57,9 @@ void AInteractiveArchController::BeginPlay()
 
 
 	if (auto SpawnedActor = GetWorld()->SpawnActor<APerspectivePawn>(APerspectivePawn::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params)) {
-		SpawnedActor->SetActorLocation({ 0,0,100 });
+		SpawnedActor->SetActorLocation({ 0,0,200 });
 		Possess(SpawnedActor);
+		SetUpInputForScrollBar();
 	}
 
 	bShowMouseCursor = true;
@@ -281,7 +282,17 @@ void AInteractiveArchController::HandleLeftClick()
 //hide selection widget on tab press
 void AInteractiveArchController::HandleTab()
 {
-	SelectionWidget->SetVisibility(ESlateVisibility::Collapsed);
+	if(SelectionWidget)
+	{
+		if(SelectionWidget->GetVisibility() == ESlateVisibility::Collapsed)
+		{
+			SelectionWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			SelectionWidget->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
 }
 
 //SPawns actor with given mesh at last hit location of floor, only called when we hit empty floor before clicking on mesh in scrollbar
@@ -374,13 +385,19 @@ void AInteractiveArchController::HandleTextureThumbnailSelected(const FTextureDa
 //Switch the modes between wall spline and shape spawn
 void AInteractiveArchController::HandleSwitch()
 {
+
+	//0 = Shape spawn mode, switch to wall spline mode
 	if (CurrentMode == 0)
 	{
+	
+
 		SelectionWidget->RemoveFromParent();
+
 		if (WallSplineWidget)
 		{
 			WallSplineWidget->AddToViewport();
 		}
+
 		if (auto const InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
 			InputSubsystem->RemoveMappingContext(MappingContextForScrollBar);
 		}
@@ -389,13 +406,20 @@ void AInteractiveArchController::HandleSwitch()
 
 
 	}
-	else
+	else// 1 = Wall spline Spawn Mode
 	{
 
 		WallSplineWidget->RemoveFromParent();
 		if (SelectionWidget)
 		{
 			SelectionWidget->AddToViewport();
+
+
+			//TO set default state
+			if (SelectionWidget)
+			{
+				SelectionWidget->SetVisibility(ESlateVisibility::Collapsed);
+			}
 		}
 		if (auto const InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
 			InputSubsystem->RemoveMappingContext(MappingContextForWall);
@@ -464,7 +488,7 @@ void AInteractiveArchController::OnSelectionChanged(FString SelectedItem, ESelec
 	RefreshView();
 
 
-	//We have to add player controllers input mappings based on current mode, because refresh view will have cleared all mappings.
+	//We have to add player controllers input mappings based on current mode, because refresh view would have cleared all mappings.
 	if (CurrentMode == 0)
 	{
 		SetUpInputForScrollBar();
