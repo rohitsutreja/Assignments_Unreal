@@ -20,6 +20,7 @@ public class SpawnFromUI : ModuleRules
              "AIModule",
              "Niagara",
               "EnhancedInput",
+              "ProceduralMeshComponent",
               "Assignments_1_2"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

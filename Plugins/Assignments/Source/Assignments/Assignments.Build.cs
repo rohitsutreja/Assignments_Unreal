@@ -43,6 +43,7 @@ public class Assignments : ModuleRules
 				"SlateCore",
                 "InputCore",
                 "EnhancedInput",
+				"ProceduralMeshComponent"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

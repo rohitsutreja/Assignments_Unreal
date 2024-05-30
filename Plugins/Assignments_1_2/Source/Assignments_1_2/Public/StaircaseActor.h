@@ -40,13 +40,13 @@ struct FStepSize {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	double Length;
+	float Length;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	double Width;
+	float Width;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	double Depth;
+	float Depth;
 };
 
 
@@ -83,7 +83,7 @@ protected:
 
 	//Open, Close or Box
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EStairTypes TypeOfStairs;
+	EStairTypes TypeOfStairs = EStairTypes::ClosedStair;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool ShowRailings = false;

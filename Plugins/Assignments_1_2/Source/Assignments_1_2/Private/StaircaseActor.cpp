@@ -9,7 +9,7 @@ AStairCaseActor::AStairCaseActor()
 
 	NumberOfSteps = 10;
 
-	StepScale = { 0.8,2,0.3 };
+	StepScale = FStepSize{ 0.8f,2.f,0.3f};
 
 	TypeOfStairs = EStairTypes::ClosedStair;
 
@@ -23,9 +23,9 @@ AStairCaseActor::AStairCaseActor()
 void AStairCaseActor::GenerateStair() {
 
 	//This will help us in setting location based on dimensions of Steps. Default is 100 which is approx dimensions of most meshes.
-	double StepLength{ StepScale.Length * 100.0 };
-	double StepWidth{ StepScale.Width * 100.0 };
-	double StepDepth{ StepScale.Depth * 100.0 };
+	float StepLength{ StepScale.Length * 100.0f };
+	float StepWidth{ StepScale.Width * 100.0f};
+	float StepDepth{ StepScale.Depth * 100.0f };
 
 	//Destroy Steps
 	for (int i{}; i < ArrayOfStepComponent.Num(); ++i) {
