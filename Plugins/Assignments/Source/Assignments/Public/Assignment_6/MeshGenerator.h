@@ -35,7 +35,6 @@ public:
 	UPROPERTY()
 	FUpdateProgressBar OnUpdateProgressBar;
 
-
 	FAsyncTask<FAsyncMeshGenerationTask>* AsyncScatterTask = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

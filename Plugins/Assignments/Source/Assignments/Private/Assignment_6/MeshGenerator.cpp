@@ -103,7 +103,18 @@ void AMeshGenerator::AddInstance(UStaticMesh* StaticMesh, const FTransform& Tran
 
 void AMeshGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	NumberOfInstances = 0;
+
 	FinishScatter();
+
+	for (auto& Pair : HISMComponents)
+	{
+		if (auto HISM = Pair.Value)
+		{
+			HISM->ClearInstances();
+			HISM->DestroyComponent();
+		}
+	}
 
 	Super::EndPlay(EndPlayReason);
 }

@@ -29,7 +29,7 @@ void FAsyncMeshGenerationTask::DoWork()
 
 
     int32 InstanceGenerated = 0;
-    if (ScatterActor)
+    if (ScatterActor.IsValid())
     {
 
         FVector SelectAreaLocation = ScatterActor->SelectionArea->GetActorLocation();

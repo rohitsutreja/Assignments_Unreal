@@ -19,7 +19,9 @@ public:
 
 private:
 
-	AMeshGenerator* ScatterActor;
+
+	TWeakObjectPtr<AMeshGenerator> ScatterActor;
+	//AMeshGenerator* ScatterActor;
 
 	TArray<FVector> MeshLocationArray;
 };
