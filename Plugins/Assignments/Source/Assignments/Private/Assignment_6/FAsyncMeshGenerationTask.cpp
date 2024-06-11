@@ -1,6 +1,7 @@
 #include "Assignment_6/FAsyncMeshGenerationTask.h"
 #include "Assignment_6/MeshGenerator.h"
-
+#include "Engine/Engine.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 FAsyncMeshGenerationTask::FAsyncMeshGenerationTask(AMeshGenerator* InScatterActor)
 {
@@ -26,87 +27,76 @@ FVector FAsyncMeshGenerationTask::GetRandomPointInSphere(const FVector& Origin, 
 
 void FAsyncMeshGenerationTask::DoWork()
 {
-
-
-    int32 InstanceGenerated = 0;
-    if (ScatterActor.IsValid())
+    if (!ScatterActor.IsValid())
     {
+        return;
+    }
 
-        FVector SelectAreaLocation = ScatterActor->SelectionArea->GetActorLocation();
+    FVector SelectAreaLocation = ScatterActor->SelectionArea->GetActorLocation();
+    FVector SelectAreaBoxDimensions = ScatterActor->SelectionArea->GetBoxDimensions();
+    float SelectAreaRadius = ScatterActor->SelectionArea->GetSphereRadius();
 
-        FVector SelectAreaBoxDimensions = ScatterActor->SelectionArea->GetBoxDimensions();
+    if (IsValid(ScatterActor->MeshDataAsset))
+    {
+        TArray<FScatterMeshData> StaticMeshes = ScatterActor->MeshDataAsset->ArrayOfMeshData;
 
-        float SelectAreaRadius = ScatterActor->SelectionArea->GetSphereRadius();
-
-
-
-        if (ScatterActor->MeshDataAsset)
+        for (int32 i = 0;  ScatterActor.IsValid() && (i < ScatterActor->NumberOfInstances); i++)
         {
-            TArray<FScatterMeshData> StaticMeshes = ScatterActor->MeshDataAsset->ArrayOfMeshData;
+            int32 RandomIndex = FMath::RandRange(0, StaticMeshes.Num() - 1);
 
-            for (int32 i = 0; i < ScatterActor->NumberOfInstances; i++)
+            UStaticMesh* CurrentMesh = StaticMeshes[RandomIndex].StaticMesh;
+            UMaterialInterface* CurrentMaterial = StaticMeshes[RandomIndex].Material;
+
+            FVector MinRotation = StaticMeshes[RandomIndex].MinimumRotation;
+            FVector MaxRotation = StaticMeshes[RandomIndex].MaximumRotation;
+
+            float MinScale = StaticMeshes[RandomIndex].MinimumScale;
+            float MaxScale = StaticMeshes[RandomIndex].MaximumScale;
+
+            FVector Position;
+            FRotator Rotation;
+            Rotation.Roll = FMath::RandRange(MinRotation.X, MaxRotation.X);
+            Rotation.Pitch = FMath::RandRange(MinRotation.Y, MaxRotation.Y);
+            Rotation.Yaw = FMath::RandRange(MinRotation.Z, MaxRotation.Z);
+
+            FVector Scale(FMath::RandRange(MinScale, MaxScale));
+
+            if (ScatterActor.IsValid() && ScatterActor->SelectionArea->CurrentTypeOfArea == EAreaType::Box)
             {
-                int32 RandomIndex = FMath::RandRange(0, StaticMeshes.Num() - 1);
-
-                UStaticMesh* CurrentMesh = StaticMeshes[RandomIndex].StaticMesh;
-                UMaterialInterface* CurrentMaterial = StaticMeshes[RandomIndex].Material;
-
-
-                FVector MinRotation = StaticMeshes[RandomIndex].MinimumRotation;
-                FVector MaxRotation = StaticMeshes[RandomIndex].MaximumRotation;
-
-                float MinScale = StaticMeshes[RandomIndex].MinimumScale;
-                float MaxScale = StaticMeshes[RandomIndex].MaximumScale;
-
-
-                FVector Position;
-
-                FRotator Rotation;
-                Rotation.Roll = FMath::RandRange(MinRotation.X, MaxRotation.X);
-                Rotation.Pitch = FMath::RandRange(MinRotation.Y, MaxRotation.Y);
-                Rotation.Yaw = FMath::RandRange(MinRotation.Z, MaxRotation.Z);
-
-                FVector Scale(FMath::RandRange(MinScale, MaxScale));
-
-                if (ScatterActor->SelectionArea->CurrentTypeOfArea == EAreaType::Box)
-                {
-
-                    FVector Origin = SelectAreaLocation + SelectAreaBoxDimensions / 2.0f;
-
-                    FBox BoundingBox = FBox(Origin - SelectAreaBoxDimensions / 2, Origin + SelectAreaBoxDimensions / 2);
-
-                    Position = FMath::RandPointInBox(BoundingBox);
-
-                }
-                else
-                {
-                    Position = GetRandomPointInSphere(SelectAreaLocation, SelectAreaRadius);
-                }
-
-
-                FTransform Transform;
-
-                Transform.SetTranslation(Position);
-                Transform.SetRotation(Rotation.Quaternion());
-                Transform.SetScale3D(Scale);
-
-
-
-                // Add the instance on the game thread
-                AsyncTask(ENamedThreads::GameThread, [CurrentMesh, CurrentMaterial, Transform, this]()
-                    {
-                        ScatterActor->AddInstance(CurrentMesh, Transform, CurrentMaterial);
-                    });
-
-
-                FPlatformProcess::Sleep(0.002);
+                FVector Origin = SelectAreaLocation + SelectAreaBoxDimensions / 2.0f;
+                FBox BoundingBox = FBox(Origin - SelectAreaBoxDimensions / 2, Origin + SelectAreaBoxDimensions / 2);
+                Position = FMath::RandPointInBox(BoundingBox);
+            }
+            else
+            {
+                Position = GetRandomPointInSphere(SelectAreaLocation, SelectAreaRadius);
             }
 
-            AsyncTask(ENamedThreads::GameThread, [this]()
-                {
-                    ScatterActor->OnUpdateProgressBar.ExecuteIfBound(0);
+            FTransform Transform;
+            Transform.SetTranslation(Position);
+            Transform.SetRotation(Rotation.Quaternion());
+            Transform.SetScale3D(Scale);
 
+            if (IsValid(CurrentMesh) && IsValid(CurrentMaterial))
+            {
+                AsyncTask(ENamedThreads::GameThread, [CurrentMesh, CurrentMaterial, Transform, this]()
+                {
+                    if (ScatterActor.IsValid())
+                    {
+                        ScatterActor->AddInstance(CurrentMesh, Transform, CurrentMaterial);
+                    }
                 });
+            }
+         
+            FPlatformProcess::Sleep(0.002);
         }
+
+        AsyncTask(ENamedThreads::GameThread, [this]()
+        {
+            if (ScatterActor.IsValid())
+            {
+                ScatterActor->OnUpdateProgressBar.ExecuteIfBound(0);
+            }
+        });
     }
 }

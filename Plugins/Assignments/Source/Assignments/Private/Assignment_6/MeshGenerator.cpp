@@ -1,120 +1,115 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Assignment_6/MeshGenerator.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Async/Async.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 
 // Sets default values
 AMeshGenerator::AMeshGenerator()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	AsyncScatterTask = nullptr; 
+    PrimaryActorTick.bCanEverTick = true;
+    AsyncScatterTask = nullptr;
 }
 
 // Called when the game starts or when spawned
 void AMeshGenerator::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 // Called every frame
 void AMeshGenerator::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-
+    Super::Tick(DeltaTime);
 }
 
 void AMeshGenerator::FinishScatter()
 {
-	Current = 0;
+    Current = 0;
 
-	if (AsyncScatterTask)
-	{
-		if (!AsyncScatterTask->IsDone())
-		{
-			AsyncScatterTask->EnsureCompletion();
-		}
+    if (AsyncScatterTask)
+    {
+        if (!AsyncScatterTask->IsDone())
+        {
+            AsyncScatterTask->EnsureCompletion();
+        }
 
-		delete AsyncScatterTask;
-		AsyncScatterTask = nullptr;
-	}
+        delete AsyncScatterTask;
+        AsyncScatterTask = nullptr;
+    }
 }
 
 void AMeshGenerator::ClearAllInstances()
 {
-	for (auto& Pair : HISMComponents)
-	{
-		if (auto HISM = Pair.Value)
-		{
-			HISM->ClearInstances();
-		}
-	}
+    for (auto& Pair : HISMComponents)
+    {
+        if (auto HISM = Pair.Value)
+        {
+            HISM->ClearInstances();
+        }
+    }
 }
 
 void AMeshGenerator::ScatterObjects()
 {
-	FinishScatter();
+    FinishScatter();
+    ClearAllInstances();
 
-	ClearAllInstances();
-
-	AsyncScatterTask = new FAsyncTask<FAsyncMeshGenerationTask>(this);
-	AsyncScatterTask->StartBackgroundTask();
+    AsyncScatterTask = new FAsyncTask<FAsyncMeshGenerationTask>(this);
+    AsyncScatterTask->StartBackgroundTask();
 }
 
 void AMeshGenerator::AddInstance(UStaticMesh* StaticMesh, const FTransform& Transform, UMaterialInterface* Material)
 {
-	auto HISMCPtr = HISMComponents.Find(StaticMesh);
+    if (!IsValid(StaticMesh) || !IsValid(Material))
+    {
+        return;
+    }
 
-	if (HISMCPtr && *HISMCPtr && (*HISMCPtr)->IsValidLowLevel())
-	{
-		(*HISMCPtr)->AddInstance(Transform);
-		(*HISMCPtr)->SetMaterial(0, Material);
+    UHierarchicalInstancedStaticMeshComponent** HISMCPtr = HISMComponents.Find(StaticMesh);
 
-	}
-	else
-	{
-		auto NewHISMCPtr = NewObject<UHierarchicalInstancedStaticMeshComponent>(this);
-		
-		NewHISMCPtr->SetStaticMesh(StaticMesh);
-		
-		HISMComponents.Add(StaticMesh, NewHISMCPtr);
+    if (HISMCPtr && IsValid(*HISMCPtr) && (*HISMCPtr)->IsValidLowLevel())
+    {
+        (*HISMCPtr)->AddInstance(Transform);
+        (*HISMCPtr)->SetMaterial(0, Material);
+    }
+    else
+    {
+        UHierarchicalInstancedStaticMeshComponent* NewHISMCPtr = NewObject<UHierarchicalInstancedStaticMeshComponent>(this);
 
-		NewHISMCPtr->RegisterComponentWithWorld(GetWorld());
-		NewHISMCPtr->AddInstance(Transform);
+        if (IsValid(NewHISMCPtr))
+        {
+            NewHISMCPtr->SetStaticMesh(StaticMesh);
+            NewHISMCPtr->SetMaterial(0, Material);
+            HISMComponents.Add(StaticMesh, NewHISMCPtr);
 
+            NewHISMCPtr->RegisterComponentWithWorld(GetWorld());
+            NewHISMCPtr->AddInstance(Transform);
+        }
+        else
+        {
+            return;
+        }
+    }
 
-	}
+    if (NumberOfInstances == 1)
+    {
+        OnUpdateProgressBar.ExecuteIfBound(1);
+    }
+    else
+    {
+        OnUpdateProgressBar.ExecuteIfBound((Current) / (float)(NumberOfInstances - 1));
+    }
 
-	if(NumberOfInstances == 1)
-	{
-		OnUpdateProgressBar.ExecuteIfBound(1);
-
-	}
-	else 
-	{
-		OnUpdateProgressBar.ExecuteIfBound((Current) / (float)(NumberOfInstances - 1));
-	}
-		Current++;
+    Current++;
 }
-
-
 
 void AMeshGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	NumberOfInstances = 0;
+ 
+   // NumberOfInstances = 0;
 
-	FinishScatter();
+   // FinishScatter();
 
-	for (auto& Pair : HISMComponents)
-	{
-		if (auto HISM = Pair.Value)
-		{
-			HISM->ClearInstances();
-			HISM->DestroyComponent();
-		}
-	}
-
-	Super::EndPlay(EndPlayReason);
+    Super::EndPlay(EndPlayReason);
 }
